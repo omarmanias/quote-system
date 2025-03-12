@@ -59,10 +59,14 @@ export default function Products() {
         }
       });
 
-      // Handle image files from upload component
-      const uploadFiles = values.imageFiles?.fileList;
-      if (uploadFiles && uploadFiles.length > 0) {
-        uploadFiles.forEach((file: any) => {
+      // Preserve existing images when updating
+      if (editingProduct?.imageUrls) {
+        formData.append('imageUrls', JSON.stringify(editingProduct.imageUrls));
+      }
+
+      // Handle new image files from upload component
+      if (fileList && fileList.length > 0) {
+        fileList.forEach((file: UploadFile) => {
           if (file.originFileObj) {
             formData.append('images', file.originFileObj);
           }
@@ -162,6 +166,18 @@ export default function Products() {
         return;
       }
 
+      // Create a new FileList with the current files
+      const newFileList = [...fileList];
+      newFileList.push({
+        uid: file.uid,
+        name: file.name,
+        status: 'done',
+        originFileObj: file,
+        url: URL.createObjectURL(file)
+      });
+      
+      setFileList(newFileList);
+      
       if (onSuccess) {
         onSuccess();
       }
@@ -295,6 +311,8 @@ export default function Products() {
                 fileList={fileList}
                 onChange={({ fileList }) => setFileList(fileList)}
                 multiple={true}
+                listType="picture-card"
+                accept="image/*"
               >
                 <Button icon={<UploadOutlined />}>Upload Images</Button>
               </Upload>

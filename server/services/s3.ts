@@ -59,7 +59,7 @@ export const s3Service = {
         Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
-        ACL: 'public-read',
+        ObjectOwnership: 'BucketOwner'
       });
 
       console.log('Sending upload command to S3...');

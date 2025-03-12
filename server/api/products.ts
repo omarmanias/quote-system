@@ -103,52 +103,43 @@ router.patch("/products/:id", upload.array('images'), async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    console.log('Updating product, received data:', { 
-      body: req.body,
-      files: req.files,
-      existingImages: product.imageUrls 
-    });
+    console.log('Form Data:', req.body);
+    console.log('Files:', req.files);
+    console.log('Content-Type:', req.headers['content-type']);
 
     const files = req.files as Express.Multer.File[];
     let allImageUrls: string[] = [];
 
-    // Preserve existing images by default
-    allImageUrls = product.imageUrls || [];
-
-    // If imageUrls is explicitly provided in the request, use those instead
+    // Handle existing images
     if (req.body.imageUrls) {
       try {
-        const requestImages = JSON.parse(req.body.imageUrls);
-        if (Array.isArray(requestImages)) {
-          allImageUrls = requestImages;
-        }
+        allImageUrls = JSON.parse(req.body.imageUrls);
+        console.log('Parsed existing imageUrls:', allImageUrls);
       } catch (e) {
-        console.error('Error parsing imageUrls from body:', e);
+        console.error('Error parsing imageUrls:', e);
+        allImageUrls = [];
       }
     }
 
-    // Upload new images to S3 if provided
+    // Upload new images to S3
     if (files && files.length > 0) {
-      console.log(`Uploading ${files.length} new files to S3`);
+      console.log(`Processing ${files.length} new files`);
       for (const file of files) {
         try {
-          console.log('Uploading file:', file.originalname);
+          console.log('Processing file:', file.originalname);
           const imageUrl = await s3Service.uploadImage(file);
-          console.log('Got S3 URL:', imageUrl);
-          allImageUrls.push(imageUrl);
+          console.log('Uploaded successfully, URL:', imageUrl);
+          if (imageUrl) {
+            allImageUrls.push(imageUrl);
+          }
         } catch (uploadError) {
-          console.error('Error uploading file to S3:', uploadError);
-          return res.status(500).json({ 
-            message: 'Failed to upload image to S3',
-            error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
-          });
+          console.error('Upload failed:', uploadError);
+          return res.status(500).json({ message: 'Failed to upload image to S3' });
         }
       }
     }
 
-    console.log('Final image URLs to be saved:', allImageUrls);
-
-    // Parse and validate the update data
+    // Update the product with new data including images
     const data = insertProductSchema.partial().parse({
       ...req.body,
       imageUrls: allImageUrls,
@@ -162,10 +153,7 @@ router.patch("/products/:id", upload.array('images'), async (req, res) => {
     if (error instanceof ZodError) {
       return res.status(400).json({ message: error.errors[0].message });
     }
-    if (error instanceof Error) {
-      return res.status(400).json({ message: error.message });
-    }
-    throw error;
+    res.status(500).json({ message: "Failed to update product" });
   }
 });
 
