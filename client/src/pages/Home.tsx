@@ -17,9 +17,23 @@ export default function Home() {
             "Modern user interface with ant design",
             "Ability to create new product categories",
             "Add images to products",
+            <Title style={
+              { fontSize: "16px" }
+
+            }>
+              02/22/25
+            </Title>,
             "Select template to display terms and conditions",
-            "Email quote to user if status is “approved”",
+            "Quote signature if in “approved” status",
+            <Title style={
+              { fontSize: "16px" }
+
+            }>
+              03/12/25
+            </Title>,
             "Schedule appointment with representative for visit",
+            "Webhook able to send information when a new quote is created",
+            "AWS S3 for product image storage"
           ].map((feature, index) => (
             <li key={index} className="flex items-center gap-2">
               <CheckCircleOutlined className="text-green-500" />

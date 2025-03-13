@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Form, Input, Button, Card, List, Typography, Modal, InputNumber, message, Space, Popconfirm, Select, Upload, Image } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined } from "@ant-design/icons";
 import { insertProductSchema } from "@shared/schema";
-import type { Product, Category, Image as ProductImage } from "@shared/schema"; // Added Image type
+import type { Product, Category, Image as ProductImage } from "@shared/schema";
 import { productService } from "@/services/products";
 import { categoryService } from "@/services/categories";
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -175,9 +175,9 @@ export default function Products() {
         originFileObj: file,
         url: URL.createObjectURL(file)
       });
-      
+
       setFileList(newFileList);
-      
+
       if (onSuccess) {
         onSuccess();
       }
@@ -190,13 +190,14 @@ export default function Products() {
   const handleRemoveImage = async (imageIndex: number) => {
     try {
       if (!editingProduct) return;
+
       const updatedImageUrls = editingProduct.imageUrls.filter((_, index) => index !== imageIndex);
-      // Update the editingProduct state with the filtered imageUrls
       setEditingProduct({ ...editingProduct, imageUrls: updatedImageUrls });
-      //You'll need to implement a backend call to actually delete the image from the server.  This is a placeholder
-      // await productService.deleteProductImage(editingProduct.id, imageIndex);
+
+      const updatedFileList = fileList.filter((_, index) => index !== imageIndex);
+      setFileList(updatedFileList);
+
       message.success('Image removed successfully');
-      await fetchData();
     } catch (error) {
       message.error('Failed to remove image');
     }
@@ -284,38 +285,23 @@ export default function Products() {
             name="imageFiles"
           >
             <div className="space-y-4">
-              {editingProduct?.imageUrls && editingProduct.imageUrls.length > 0 && (
-                <div className="grid grid-cols-3 gap-4">
-                  {editingProduct.imageUrls.map((imageUrl: string, index: number) => (
-                    <div key={index} className="relative">
-                      <Image
-                        src={imageUrl}
-                        alt={`Product image ${index + 1}`}
-                        width={100}
-                        height={100}
-                        style={{ objectFit: 'cover' }}
-                      />
-                      <Button
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        className="absolute top-0 right-0"
-                        onClick={() => handleRemoveImage(index)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Upload
-                customRequest={handleUpload}
-                fileList={fileList}
-                onChange={({ fileList }) => setFileList(fileList)}
-                multiple={true}
-                listType="picture-card"
-                accept="image/*"
-              >
-                <Button icon={<UploadOutlined />}>Upload Images</Button>
-              </Upload>
+              <div className="">
+                <Upload
+                  fileList={fileList}
+                  onChange={({ fileList }) => setFileList(fileList)}
+                  multiple
+                  accept="image/*"
+                  customRequest={handleUpload}
+                  onRemove={(file) => {
+                    const index = fileList.indexOf(file);
+                    handleRemoveImage(index);
+                    return true;
+                  }}
+                >
+                  <Button icon={<UploadOutlined />}>
+                  </Button>
+                </Upload>
+              </div>
             </div>
           </Form.Item>
 
@@ -433,22 +419,6 @@ export default function Products() {
               ]}
             >
               <List.Item.Meta
-                avatar={
-                  product.imageUrls && product.imageUrls.length > 0 && (
-                    <div className="grid grid-cols-3 gap-4">
-                      {product.imageUrls.slice(0, 3).map((imageUrl: string, index) => (
-                        <Image
-                          key={index}
-                          src={imageUrl}
-                          alt={product.name}
-                          width={100}
-                          height={100}
-                          style={{ objectFit: 'cover' }}
-                        />
-                      ))}
-                    </div>
-                  )
-                }
                 title={product.name}
                 description={
                   <>
